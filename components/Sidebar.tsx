@@ -98,20 +98,21 @@ export function Sidebar({ items }: { items: NavItem[] }) {
             );
           }
 
-          // Regular link
-          const active = path === it.href || (it.href !== "/" && path.startsWith(it.href + "/"));
+          // Regular link — explicit cast needed because TS can't narrow after two preceding guards
+          const link = it as { href: string; label: string; disabled?: boolean };
+          const active = path === link.href || (link.href !== "/" && path.startsWith(link.href + "/"));
           const cls =
             "block w-full rounded-xl px-3 py-2 text-sm transition " +
-            (it.disabled
+            (link.disabled
               ? "cursor-not-allowed opacity-50"
               : active
               ? "bg-white/15 border border-white/25"
               : "hover:bg-white/10");
 
-          return it.disabled ? (
-            <div key={it.href ?? it.label} className={cls}>{it.label}</div>
+          return link.disabled ? (
+            <div key={link.href ?? link.label} className={cls}>{link.label}</div>
           ) : (
-            <Link key={it.href} className={cls} href={it.href!}>{it.label}</Link>
+            <Link key={link.href} className={cls} href={link.href}>{link.label}</Link>
           );
         })}
       </div>

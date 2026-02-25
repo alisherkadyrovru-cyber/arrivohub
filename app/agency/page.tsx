@@ -1,22 +1,7 @@
 "use client";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import type { NavItem } from "@/components/Sidebar";
-
-export const agencyNav: NavItem[] = [
-  { href: "/agency", label: "Home" },
-  {
-    label: "Active requests",
-    children: [
-      { href: "/agency/requests/pending", label: "Pending" },
-      { href: "/agency/requests/confirmed", label: "Confirmed" },
-    ],
-  },
-  { href: "/agency/requests/archive", label: "Archived requests" },
-  { href: "/agency/credits", label: "Credits" },
-  { href: "/agency/statistics", label: "Statistics", disabled: true },
-  { href: "/agency/profile", label: "Profile" },
-];
+import { agencyNav } from "@/lib/nav";
 
 export default function AgencyHome() {
   return (

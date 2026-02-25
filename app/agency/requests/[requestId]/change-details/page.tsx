@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
-import { agencyNav } from "@/app/agency/page";
+import { agencyNav } from "@/lib/nav";
 import { getRequestById, updateRequest, updateConfirmedRequest } from "@/lib/repo";
 import type { ADType, AssistType, GuideType, Request } from "@/lib/types";
 

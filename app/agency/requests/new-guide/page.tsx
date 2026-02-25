@@ -1,6 +1,6 @@
 "use client";
 import { AppShell } from "@/components/AppShell";
-import { agencyNav } from "@/app/agency/page";
+import { agencyNav } from "@/lib/nav";
 import { useState } from "react";
 import { createRequest } from "@/lib/repo";
 import { getCurrentProfile } from "@/lib/session";

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { RequestCard } from "@/components/RequestCard";
-import { assistantNav } from "@/app/assistant/page";
+import { assistantNav } from "@/lib/nav";
 import { listRequests } from "@/lib/repo";
 import { getCurrentProfile } from "@/lib/session";
 import type { Request } from "@/lib/types";

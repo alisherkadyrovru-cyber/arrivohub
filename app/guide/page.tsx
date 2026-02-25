@@ -4,22 +4,8 @@ import { AppShell } from "@/components/AppShell";
 import { RequestCard } from "@/components/RequestCard";
 import { addApplication, listApplications, listRequests } from "@/lib/repo";
 import { getCurrentProfile } from "@/lib/session";
+import { guideNav } from "@/lib/nav";
 import type { Profile, Request } from "@/lib/types";
-
-export const guideNav = [
-  { href: "/guide", label: "Home" },
-  {
-    label: "Active requests",
-    children: [
-      { href: "/guide/requests/pending", label: "Pending" },
-      { href: "/guide/requests/confirmed", label: "Confirmed" },
-    ],
-  },
-  { href: "/guide/requests/archive", label: "Archived requests" },
-  { href: "/guide/subscription", label: "Subscription" },
-  { href: "/guide/statistics", label: "Statistics", disabled: true },
-  { href: "/guide/profile", label: "Profile" },
-];
 
 export default function Feed() {
   const [requests, setRequests] = useState<Request[]>([]);

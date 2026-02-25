@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { RequestCard } from "@/components/RequestCard";
-import { assistantNav } from "@/app/assistant/page";
+import { assistantNav } from "@/lib/nav";
 import { archiveRequest, getTransportDetails, listRequests, resolveDetailsUpdate } from "@/lib/repo";
 import { getCurrentProfile } from "@/lib/session";
 import type { Request } from "@/lib/types";

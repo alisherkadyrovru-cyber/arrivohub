@@ -1,6 +1,6 @@
 "use client";
 import { AppShell } from "@/components/AppShell";
-import { agencyNav } from "@/app/agency/page";
+import { agencyNav } from "@/lib/nav";
 export default function StatisticsLocked() {
   return (
     <AppShell role="agency" navItems={agencyNav} centerTitle={(p)=>p.fullName} rightSlot={(p)=><span className="chip">Credits: {p.credits ?? 0}</span>}>

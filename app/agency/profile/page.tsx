@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { agencyNav } from "@/app/agency/page";
+import { agencyNav } from "@/lib/nav";
 import { getCurrentProfile } from "@/lib/session";
 
 export default function AgencyProfile() {

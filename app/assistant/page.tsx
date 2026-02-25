@@ -4,22 +4,8 @@ import { AppShell } from "@/components/AppShell";
 import { RequestCard } from "@/components/RequestCard";
 import { addApplication, listApplications, listRequests } from "@/lib/repo";
 import { getCurrentProfile } from "@/lib/session";
+import { assistantNav } from "@/lib/nav";
 import type { Profile, Request } from "@/lib/types";
-
-export const assistantNav = [
-  { href: "/assistant", label: "Home" },
-  {
-    label: "Active requests",
-    children: [
-      { href: "/assistant/requests/pending", label: "Pending" },
-      { href: "/assistant/requests/confirmed", label: "Confirmed" },
-    ],
-  },
-  { href: "/assistant/requests/archive", label: "Archived requests" },
-  { href: "/assistant/subscription", label: "Subscription" },
-  { href: "/assistant/statistics", label: "Statistics", disabled: true },
-  { href: "/assistant/profile", label: "Profile" },
-];
 
 export default function Feed() {
   const [requests, setRequests] = useState<Request[]>([]);

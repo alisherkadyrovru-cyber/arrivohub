@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { ApplicantsList, RequestCard } from "@/components/RequestCard";
-import { agencyNav } from "@/app/agency/page";
+import { agencyNav } from "@/lib/nav";
 import { confirmRequest, listApplications, listRequests, updateRequest, getApplicantProfile } from "@/lib/repo";
 import type { Application, ApplicantProfile, Request } from "@/lib/types";
 

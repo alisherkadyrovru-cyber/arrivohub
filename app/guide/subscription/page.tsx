@@ -1,6 +1,6 @@
 "use client";
 import { AppShell } from "@/components/AppShell";
-import { guideNav } from "@/app/guide/page";
+import { guideNav } from "@/lib/nav";
 export default function Subscription() {
   return (
     <AppShell role="guide" navItems={guideNav as any} centerTitle={(p) => p.fullName} rightSlot={(p) => <span className="chip">Sub until: {p.expiresAt ?? "—"}</span>}>

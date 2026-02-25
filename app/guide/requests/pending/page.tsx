@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { RequestCard } from "@/components/RequestCard";
-import { guideNav } from "@/app/guide/page";
+import { guideNav } from "@/lib/nav";
 import { listApplications, listRequests } from "@/lib/repo";
 import { getCurrentProfile } from "@/lib/session";
 import type { Request } from "@/lib/types";

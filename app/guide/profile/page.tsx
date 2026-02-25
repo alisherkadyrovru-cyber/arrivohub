@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { guideNav } from "@/app/guide/page";
+import { guideNav } from "@/lib/nav";
 import { getCurrentProfile } from "@/lib/session";
 export default function Profile() {
   const [p, setP] = useState<any>(null);

@@ -1,6 +1,6 @@
 "use client";
 import { AppShell } from "@/components/AppShell";
-import { assistantNav } from "@/app/assistant/page";
+import { assistantNav } from "@/lib/nav";
 export default function Subscription() {
   return (
     <AppShell role="assistant" navItems={assistantNav as any} centerTitle={(p)=>p.fullName} rightSlot={(p)=><span className="chip">Sub until: {p.expiresAt ?? "—"}</span>}>

@@ -1,0 +1,1 @@
+-- Starter schema placeholder (we'll refine RLS and relations in next step)

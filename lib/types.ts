@@ -1,0 +1,76 @@
+export type Role = "agency" | "assistant" | "guide" | "admin";
+export type RequestKind = "assistant" | "guide";
+export type AssistType = "Greeter" | "Assistant";
+export type ADType = "Arrival" | "Departure" | "Other";
+export type GuideType = "FD" | "FD+Night" | "A Few Days";
+export type RequestStatus = "open" | "confirmed" | "archived";
+
+export type RequestBase = {
+  id: string;
+  kind: RequestKind;
+  agencyName: string;
+  notes?: string;
+  date: string;
+  time?: string;
+  hotel: string;
+  pax: number;
+  lang: string;
+  priceTry: number;
+  status: RequestStatus;
+  createdAt: string;
+  updatedAt: string;
+  confirmedApplicantName?: string;
+  confirmedApplicantId?: string;
+  confirmedPriceTry?: number;
+  pendingDetailsUpdate?: boolean;
+};
+
+export type AssistantRequest = RequestBase & {
+  kind: "assistant";
+  assistType: AssistType;
+  adType: ADType;
+  flightCode?: string;
+  airport?: string;
+};
+
+export type GuideRequest = RequestBase & {
+  kind: "guide";
+  guideType: GuideType;
+};
+
+export type Request = AssistantRequest | GuideRequest;
+
+export type Application = {
+  id: string;
+  requestId: string;
+  applicantId: string;
+  applicantName: string;
+  role: "assistant" | "guide";
+  offerTry: number | null;
+  createdAt: string;
+};
+
+export type ApplicantProfile = {
+  id: string;
+  name: string;
+  age: number;
+  gender: "Male" | "Female";
+  languages: { lang: string; level: string }[];
+  rating: number;
+  completedCount: number;
+  tursabCard?: string;
+  kokartId?: string;
+  phone?: string;
+  email?: string;
+};
+
+export type Profile = {
+  id: string;
+  role: Role;
+  fullName: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  expiresAt?: string;
+  credits?: number;
+};

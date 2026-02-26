@@ -1,15 +1,15 @@
 "use client";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { loadMockState, saveMockState } from "@/lib/mock/store";
-import type { Application, ApplicantProfile, Request } from "@/lib/types";
+import type { Application, ApplicantProfile, Profile, ReceiptUpload, Request, SubscriptionPayment } from "@/lib/types";
 
 function uid(prefix:string){ return `${prefix}_${Math.random().toString(16).slice(2)}_${Date.now()}`; }
 function now(){ return new Date().toISOString(); }
 
+// ─── Requests ────────────────────────────────────────────────────────────────
+
 export async function listRequests(filter?: { kind?: "assistant"|"guide"; status?: "open"|"confirmed"|"archived" }) {
-  if (isSupabaseConfigured()) {
-    // Supabase integration comes next step; keep UI runnable now.
-  }
+  if (isSupabaseConfigured()) { /* Supabase integration next step */ }
   const st = loadMockState();
   return st.requests
     .filter(r => filter?.kind ? r.kind===filter.kind : true)
@@ -17,10 +17,18 @@ export async function listRequests(filter?: { kind?: "assistant"|"guide"; status
     .sort((a,b) => (a.date + (a.time ?? "")) > (b.date + (b.time ?? "")) ? 1 : -1);
 }
 
-export async function createRequest(r: Omit<Request,"id"|"status"|"createdAt"|"updatedAt">) {
+export async function createRequest(r: Omit<Request,"id"|"status"|"createdAt"|"updatedAt">, agencyProfileId?: string) {
   const st = loadMockState();
   const req = { ...r, id: uid("req"), status:"open", createdAt: now(), updatedAt: now() } as Request;
   st.requests.unshift(req);
+  if (agencyProfileId) {
+    const costCredits = r.kind === "assistant" ? 5 : 10;
+    const profile = st.profiles[agencyProfileId];
+    if (profile && profile.credits !== undefined) {
+      profile.credits = Math.max(0, profile.credits - costCredits);
+      st.creditsLedger.unshift({ id: uid("led"), profileId: agencyProfileId, delta: -costCredits, note: `Request ${req.id}`, createdAt: now() });
+    }
+  }
   saveMockState(st);
   return req;
 }
@@ -34,7 +42,6 @@ export async function addApplication(requestId: string, payload: { applicantId: 
   const st = loadMockState();
   const apps = st.applications.filter(a => a.requestId===requestId);
   if (apps.length >= 5) throw new Error("This request already has 5 applicants.");
-  // prevent duplicate application from same person
   if (apps.find(a => a.applicantId===payload.applicantId)) throw new Error("Already applied.");
   const app: Application = { id: uid("app"), requestId, applicantId: payload.applicantId, applicantName: payload.applicantName, role: payload.role, offerTry: payload.offerTry, createdAt: now() };
   st.applications.push(app);
@@ -92,16 +99,13 @@ export async function resolveDetailsUpdate(requestId: string, accept: boolean) {
   return r;
 }
 
-export async function getApplicantProfile(applicantId: string): Promise<ApplicantProfile | null> {
-  const st = loadMockState();
-  return st.applicantProfiles?.[applicantId] ?? null;
-}
-
 export async function archiveRequest(requestId: string) {
   const st = loadMockState();
   const r = st.requests.find(x => x.id===requestId);
   if (!r) throw new Error("Request not found");
-  r.status="archived"; r.updatedAt=now();
+  r.status = "archived";
+  r.updatedAt = now();
+  (r as any).finishedAt = now();
   saveMockState(st);
   return r;
 }
@@ -111,12 +115,14 @@ export async function updateRequest(requestId: string, patch: Partial<Request>) 
   const r = st.requests.find(x => x.id===requestId);
   if (!r) throw new Error("Request not found");
   Object.assign(r as any, patch);
-  r.updatedAt=now();
+  r.updatedAt = now();
   st.applications = st.applications.filter(a => a.requestId !== requestId);
-  r.status="open";
+  r.status = "open";
   saveMockState(st);
   return r;
 }
+
+// ─── Transport ────────────────────────────────────────────────────────────────
 
 export async function setTransportDetails(requestId: string, details: { driverName: string; carModel: string; plate: string; phone: string }) {
   const st = loadMockState();
@@ -128,7 +134,127 @@ export async function getTransportDetails(requestId: string) {
   const st = loadMockState();
   return st.transport[requestId] ?? null;
 }
+
+// ─── Applicant profiles ───────────────────────────────────────────────────────
+
+export async function getApplicantProfile(applicantId: string): Promise<ApplicantProfile | null> {
+  const st = loadMockState();
+  return st.applicantProfiles?.[applicantId] ?? null;
+}
+
+// ─── Credits ledger ───────────────────────────────────────────────────────────
+
 export async function listCreditsLedger(profileId: string) {
   const st = loadMockState();
   return st.creditsLedger.filter(x => x.profileId===profileId).sort((a,b) => a.createdAt > b.createdAt ? -1 : 1);
+}
+
+// ─── Registration ─────────────────────────────────────────────────────────────
+
+function generateCabinetId(role: string): string {
+  const prefix = role === "agency" ? "TR-AG" : role === "assistant" ? "TR-GR" : "TR-GU";
+  const num = String(Math.floor(100000 + Math.random() * 900000));
+  return `${prefix}-${num}`;
+}
+
+export async function registerUser(data: Omit<Profile, "id"> & { password: string }): Promise<string> {
+  const st = loadMockState();
+  const existing = Object.values(st.profiles).find(p => p.email === data.email);
+  if (existing) throw new Error("An account with this email already exists.");
+  const { password: _pw, ...profileData } = data;
+  const token = uid("reg");
+  const profile: Profile = {
+    ...profileData,
+    id: token,
+    cabinetId: generateCabinetId(data.role),
+    credits: data.role === "agency" ? 0 : undefined,
+  };
+  st.pendingRegistrations[token] = profile;
+  saveMockState(st);
+  return token;
+}
+
+export async function confirmRegistration(token: string): Promise<Profile> {
+  const st = loadMockState();
+  const profile = st.pendingRegistrations[token];
+  if (!profile) throw new Error("Invalid or expired token.");
+  const newId = uid("usr");
+  profile.id = newId;
+  st.profiles[newId] = profile;
+  delete st.pendingRegistrations[token];
+  saveMockState(st);
+  return profile;
+}
+
+// ─── Receipts ─────────────────────────────────────────────────────────────────
+
+export async function uploadReceipt(data: Omit<ReceiptUpload, "id" | "createdAt">): Promise<ReceiptUpload> {
+  const st = loadMockState();
+  const receipt: ReceiptUpload = { ...data, id: uid("rcpt"), createdAt: now() };
+  st.receiptUploads.push(receipt);
+  saveMockState(st);
+  return receipt;
+}
+
+export async function listReceiptUploads(profileId?: string): Promise<ReceiptUpload[]> {
+  const st = loadMockState();
+  const all = [...st.receiptUploads].sort((a,b) => a.createdAt > b.createdAt ? -1 : 1);
+  return profileId ? all.filter(r => r.profileId === profileId) : all;
+}
+
+export async function markReceiptProcessed(receiptId: string): Promise<void> {
+  const st = loadMockState();
+  const r = st.receiptUploads.find(x => x.id === receiptId);
+  if (r) { r.processed = true; saveMockState(st); }
+}
+
+// ─── Subscription payments ────────────────────────────────────────────────────
+
+export async function listSubscriptionPayments(profileId: string): Promise<SubscriptionPayment[]> {
+  const st = loadMockState();
+  return st.subscriptionPayments
+    .filter(x => x.profileId === profileId)
+    .sort((a,b) => a.createdAt > b.createdAt ? -1 : 1);
+}
+
+// ─── Admin functions ──────────────────────────────────────────────────────────
+
+export async function adminGetAllUsers(): Promise<Profile[]> {
+  const st = loadMockState();
+  return Object.values(st.profiles);
+}
+
+export async function adminTopUpCredits(agencyId: string, amount: number): Promise<void> {
+  const st = loadMockState();
+  const p = st.profiles[agencyId];
+  if (!p) throw new Error("Agency not found");
+  p.credits = (p.credits ?? 0) + amount;
+  st.creditsLedger.unshift({ id: uid("led"), profileId: agencyId, delta: +amount, note: "Admin top-up", createdAt: now() });
+  saveMockState(st);
+}
+
+export async function adminExtendSubscription(userId: string, days: number): Promise<void> {
+  const st = loadMockState();
+  const p = st.profiles[userId];
+  if (!p) throw new Error("User not found");
+  const base = p.expiresAt ? new Date(p.expiresAt) : new Date();
+  if (base < new Date()) base.setTime(new Date().getTime());
+  base.setDate(base.getDate() + days);
+  p.expiresAt = base.toISOString().slice(0, 10);
+  const priceTry = days <= 14 ? (p.role === "assistant" ? 500 : 1000)
+                 : days <= 30 ? (p.role === "assistant" ? 900 : 1800)
+                 : (p.role === "assistant" ? 2500 : 5000);
+  st.subscriptionPayments.push({ id: uid("sub"), profileId: userId, days, priceTry, createdAt: now() });
+  saveMockState(st);
+}
+
+export async function adminDeleteUser(userId: string): Promise<void> {
+  const st = loadMockState();
+  delete st.profiles[userId];
+  saveMockState(st);
+}
+
+export async function adminGetAllRequests(): Promise<Request[]> {
+  const st = loadMockState();
+  return [...st.requests].sort((a,b) => a.createdAt > b.createdAt ? -1 : 1);
 }

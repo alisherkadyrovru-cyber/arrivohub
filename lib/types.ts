@@ -23,6 +23,7 @@ export type RequestBase = {
   confirmedApplicantId?: string;
   confirmedPriceTry?: number;
   pendingDetailsUpdate?: boolean;
+  finishedAt?: string;
 };
 
 export type AssistantRequest = RequestBase & {
@@ -73,4 +74,31 @@ export type Profile = {
   address?: string;
   expiresAt?: string;
   credits?: number;
+  cabinetId?: string;
+  dateOfBirth?: string;
+  gender?: "Male" | "Female";
+  tursabCard?: string;
+  kokartId?: string;
+  languages?: { lang: string; level: string }[];
+  vatNumber?: string;
+  tursabLicense?: string;
+};
+
+export type ReceiptUpload = {
+  id: string;
+  profileId: string;
+  cabinetId: string;
+  fileName: string;
+  type: "credits" | "subscription";
+  amount: number;
+  createdAt: string;
+  processed?: boolean;
+};
+
+export type SubscriptionPayment = {
+  id: string;
+  profileId: string;
+  days: number;
+  priceTry: number;
+  createdAt: string;
 };

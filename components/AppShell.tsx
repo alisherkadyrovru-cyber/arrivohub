@@ -50,13 +50,15 @@ export function AppShell({
     ];
   }, [navItems, profile, router]);
 
+  const homeHref = role === "agency" ? "/agency" : role === "assistant" ? "/assistant" : "/guide";
+
   if (loading) return <div className="min-h-screen"><div className="mx-auto max-w-6xl px-4 py-10 text-white/80">Loading...</div></div>;
   if (!profile) return null;
 
   return (
     <div className="min-h-screen pb-12">
       <TopBar lang={lang} onLang={onLang} />
-      <Header showContacts={false} titleCenter={centerTitle(profile)} rightSlot={headerRight} />
+      <Header showContacts={false} homeHref={homeHref} titleCenter={centerTitle(profile)} rightSlot={headerRight} />
       <div className="mx-auto mt-6 max-w-6xl px-4">
         <div className="grid gap-4 md:grid-cols-[260px_1fr]">
           <Sidebar items={fullNavItems as any} />

@@ -12,7 +12,8 @@ export default function AgencyProfile() {
       <div className="space-y-4">
         <div className="text-lg font-semibold">Profile</div>
         <div className="glass-soft p-4 text-sm">
-          <div><span className="muted">Name:</span> {p?.fullName ?? "—"}</div>
+          <div><span className="muted">Cabinet ID:</span> {p?.cabinetId ?? "—"}</div>
+          <div className="mt-1"><span className="muted">Name:</span> {p?.fullName ?? "—"}</div>
           <div className="mt-1"><span className="muted">Email:</span> {p?.email ?? "—"}</div>
           <div className="mt-1"><span className="muted">Phone:</span> {p?.phone ?? "—"}</div>
           <div className="mt-1"><span className="muted">Address:</span> {p?.address ?? "—"}</div>

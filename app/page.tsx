@@ -1,5 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Header } from "@/components/Header";
 import { TopBar } from "@/components/TopBar";
 import { GlassCard } from "@/components/GlassCard";
@@ -11,11 +12,12 @@ import { useState } from "react";
 import type { Role } from "@/lib/types";
 
 function RoleLoginCard({
-  role, title, bullets, onDone
+  role, title, bullets, registerHref, onDone
 }:{
   role: Exclude<Role,"admin">;
   title: string;
   bullets: string[];
+  registerHref: string;
   onDone: (role:Exclude<Role,"admin">, email:string, password:string, remember:boolean)=>Promise<void>;
 }) {
   const [email,setEmail]=useState("");
@@ -56,6 +58,9 @@ function RoleLoginCard({
         </label>
         {error ? <div className="rounded-xl border border-red-200/20 bg-red-500/10 px-3 py-2 text-xs text-red-100">{error}</div> : null}
         <button className="glass-btn w-full" type="submit" disabled={loading}>{loading ? "..." : "Sign in"}</button>
+        <Link href={registerHref} className="block text-center text-xs text-white/60 underline underline-offset-2 hover:text-white/90">
+          Create account
+        </Link>
       </form>
     </GlassCard>
   );
@@ -85,9 +90,9 @@ export default function HomePage() {
         ) : null}
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <RoleLoginCard role="agency" title="Agency" bullets={["Create requests for Assistants/Greeters","Create requests for Guides","Manage credits & operations"]} onDone={doLogin} />
-          <RoleLoginCard role="assistant" title="Greeter / Assistant" bullets={["See requests feed","Accept or offer your price","Track confirmed operations"]} onDone={doLogin} />
-          <RoleLoginCard role="guide" title="Guide" bullets={["See tour feed","Accept or offer your price","Track confirmed tours"]} onDone={doLogin} />
+          <RoleLoginCard role="agency" title="Agency" bullets={["Create requests for Assistants/Greeters","Create requests for Guides","Manage credits & operations"]} registerHref="/register/agency" onDone={doLogin} />
+          <RoleLoginCard role="assistant" title="Greeter / Assistant" bullets={["See requests feed","Accept or offer your price","Track confirmed operations"]} registerHref="/register/assistant" onDone={doLogin} />
+          <RoleLoginCard role="guide" title="Guide" bullets={["See tour feed","Accept or offer your price","Track confirmed tours"]} registerHref="/register/guide" onDone={doLogin} />
         </div>
 
         <div className="mt-10">

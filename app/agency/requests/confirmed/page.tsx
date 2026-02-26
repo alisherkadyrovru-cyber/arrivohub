@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { RequestCard } from "@/components/RequestCard";
+import { ApplicantModal } from "@/components/ApplicantModal";
 import { agencyNav } from "@/lib/nav";
-import { getTransportDetails, listRequests, setTransportDetails } from "@/lib/repo";
-import type { Request } from "@/lib/types";
+import { getTransportDetails, listRequests, setTransportDetails, getApplicantProfile } from "@/lib/repo";
+import { getCurrentProfile } from "@/lib/session";
+import type { ApplicantProfile, Request } from "@/lib/types";
 
 type Transport = { driverName: string; carModel: string; plate: string; phone: string };
 
@@ -46,9 +48,11 @@ function TransportForm({ requestId, existing, onSaved }: { requestId: string; ex
 
 export default function ConfirmedRequests() {
   const router = useRouter();
+  const [agencyId, setAgencyId] = useState("");
   const [requests, setRequests] = useState<Request[]>([]);
   const [transport, setTransport] = useState<Record<string, Transport | null>>({});
   const [transportFormOpen, setTransportFormOpen] = useState<Record<string, boolean>>({});
+  const [modalProfile, setModalProfile] = useState<ApplicantProfile | null>(null);
 
   async function refresh() {
     const rs = await listRequests({ status: "confirmed" });
@@ -57,10 +61,23 @@ export default function ConfirmedRequests() {
     for (const r of rs) t[r.id] = await getTransportDetails(r.id);
     setTransport(t);
   }
-  useEffect(() => { refresh(); }, []);
+
+  useEffect(() => {
+    getCurrentProfile().then(p => { if (p) setAgencyId(p.id); });
+    refresh();
+  }, []);
+
+  async function handleNameClick(applicantId?: string) {
+    if (!applicantId) return;
+    const profile = await getApplicantProfile(applicantId);
+    if (profile) setModalProfile(profile);
+  }
 
   return (
     <AppShell role="agency" navItems={agencyNav} centerTitle={(p) => p.fullName} rightSlot={(p) => <span className="chip">Credits: {p.credits ?? 0}</span>}>
+      {modalProfile && agencyId && (
+        <ApplicantModal profile={modalProfile} onClose={() => setModalProfile(null)} showContact={true} agencyId={agencyId} />
+      )}
       <div className="space-y-4">
         <div className="text-lg font-semibold">Active requests — Confirmed</div>
         <div className="space-y-3">
@@ -71,7 +88,12 @@ export default function ConfirmedRequests() {
               <RequestCard key={r.id} request={r}>
                 <div className="text-sm">
                   <span className="muted">Confirmed {r.kind === "assistant" ? "Assistant" : "Guide"}: </span>
-                  <span className="font-semibold">{r.confirmedApplicantName ?? "—"}</span>
+                  <button
+                    className="font-semibold underline underline-offset-2 hover:opacity-75"
+                    onClick={() => handleNameClick(r.confirmedApplicantId)}
+                  >
+                    {r.confirmedApplicantName ?? "—"}
+                  </button>
                   {r.confirmedPriceTry != null && <span className="ml-2 text-white/70">· {r.confirmedPriceTry.toLocaleString("tr-TR")} TRY</span>}
                 </div>
 

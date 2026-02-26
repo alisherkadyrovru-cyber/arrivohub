@@ -1,7 +1,7 @@
 "use client";
 import { AppShell } from "@/components/AppShell";
 import { agencyNav } from "@/lib/nav";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createRequest } from "@/lib/repo";
 import { getCurrentProfile } from "@/lib/session";
 import type { GuideType } from "@/lib/types";
@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 
 export default function NewGuideRequest() {
   const router = useRouter();
+  const [agencyId, setAgencyId] = useState("");
   const [guideType, setGuideType] = useState<GuideType>("FD");
   const [date, setDate] = useState("");
   const [hotel, setHotel] = useState("");
@@ -16,7 +17,12 @@ export default function NewGuideRequest() {
   const [lang, setLang] = useState("EN");
   const [notes, setNotes] = useState("");
   const [priceTry, setPriceTry] = useState(0);
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    getCurrentProfile().then(p => { if (p) setAgencyId(p.id); });
+  }, []);
 
   return (
     <AppShell role="agency" navItems={agencyNav} centerTitle={(p)=>p.fullName} rightSlot={(p)=><span className="chip">Credits: {p.credits ?? 0}</span>}>
@@ -37,7 +43,8 @@ export default function NewGuideRequest() {
               lang,
               notes,
               priceTry,
-            } as any);
+              onlyFavorites,
+            } as any, agencyId || profile?.id);
             router.push("/agency/requests/pending");
           } finally { setLoading(false); }
         }}>
@@ -82,8 +89,17 @@ export default function NewGuideRequest() {
             <input className="input mt-1" type="number" min={0} value={priceTry} onChange={(e)=>setPriceTry(parseInt(e.target.value||"0",10))} required />
           </label>
 
-          <div className="flex items-end">
-            <button className="glass-btn w-full" type="submit" disabled={loading}>{loading ? "Publishing..." : "Publish"}</button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <label className="flex items-center gap-2 text-sm cursor-pointer select-none flex-1">
+              <div
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${onlyFavorites ? "bg-white/40" : "bg-white/15"}`}
+                onClick={() => setOnlyFavorites(v => !v)}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${onlyFavorites ? "translate-x-6" : "translate-x-1"}`} />
+              </div>
+              <span className="text-white/80">Only my favorites</span>
+            </label>
+            <button className="glass-btn" type="submit" disabled={loading}>{loading ? "Publishing..." : "Publish"}</button>
           </div>
         </form>
       </div>

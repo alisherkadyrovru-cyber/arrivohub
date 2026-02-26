@@ -10,6 +10,8 @@ export const agencyNav: NavItem[] = [
     ],
   },
   { href: "/agency/requests/archive", label: "Archived requests" },
+  { href: "/agency/find", label: "Find Assistant/Guide" },
+  { href: "/agency/favorites", label: "My Favorites" },
   { href: "/agency/credits", label: "Credits" },
   { href: "/agency/statistics", label: "Statistics", disabled: true },
   { href: "/agency/profile", label: "Profile" },

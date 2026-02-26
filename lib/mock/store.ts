@@ -10,6 +10,7 @@ type MockState = {
   pendingRegistrations: Record<string, Profile>;
   receiptUploads: ReceiptUpload[];
   subscriptionPayments: SubscriptionPayment[];
+  favorites: Record<string, string[]>;
 };
 
 function nowIso(){ return new Date().toISOString(); }
@@ -66,31 +67,31 @@ const seed: MockState = (() => {
       id: "mock_assistant_1", name: "Name Surname 1", age: 29, gender: "Male",
       languages: [{ lang: "EN", level: "Fluent" }, { lang: "RU", level: "Native" }],
       rating: 4.8, completedCount: 47, tursabCard: "TR-12345",
-      phone: "+90 555 111 11 11", email: "assistant@demo.com",
+      phone: "+90 555 111 11 11", email: "assistant@demo.com", role: "assistant",
     },
     "ap_2": {
       id: "ap_2", name: "Name Surname 2", age: 34, gender: "Female",
       languages: [{ lang: "EN", level: "Fluent" }, { lang: "IT", level: "Intermediate" }],
       rating: 4.5, completedCount: 28, tursabCard: "TR-67890",
-      phone: "+90 555 333 33 33", email: "assistant2@demo.com",
+      phone: "+90 555 333 33 33", email: "assistant2@demo.com", role: "assistant",
     },
     "ap_3": {
       id: "ap_3", name: "Name Surname 3", age: 26, gender: "Male",
       languages: [{ lang: "EN", level: "Intermediate" }, { lang: "AR", level: "Native" }],
       rating: 4.2, completedCount: 15,
-      phone: "+90 555 444 44 44", email: "assistant3@demo.com",
+      phone: "+90 555 444 44 44", email: "assistant3@demo.com", role: "assistant",
     },
     "mock_guide_1": {
       id: "mock_guide_1", name: "Name Surname 4", age: 38, gender: "Male",
       languages: [{ lang: "EN", level: "Fluent" }, { lang: "RU", level: "Intermediate" }],
       rating: 4.9, completedCount: 112, kokartId: "KOK-55512",
-      phone: "+90 555 222 22 22", email: "guide@demo.com",
+      phone: "+90 555 222 22 22", email: "guide@demo.com", role: "guide",
     },
     "gd_5": {
       id: "gd_5", name: "Name Surname 5", age: 31, gender: "Female",
       languages: [{ lang: "EN", level: "Fluent" }, { lang: "ES", level: "Fluent" }],
       rating: 4.6, completedCount: 63, kokartId: "KOK-77234",
-      phone: "+90 555 555 55 55", email: "guide5@demo.com",
+      phone: "+90 555 555 55 55", email: "guide5@demo.com", role: "guide",
     },
   };
 
@@ -110,6 +111,7 @@ const seed: MockState = (() => {
     pendingRegistrations: {},
     receiptUploads: [],
     subscriptionPayments,
+    favorites: {},
   };
 })();
 
@@ -125,6 +127,7 @@ export function loadMockState(): MockState {
     if (!parsed.pendingRegistrations) parsed.pendingRegistrations = {};
     if (!parsed.receiptUploads) parsed.receiptUploads = [];
     if (!parsed.subscriptionPayments) parsed.subscriptionPayments = seed.subscriptionPayments;
+    if (!parsed.favorites) parsed.favorites = {};
     return parsed;
   } catch { return seed; }
 }

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { RequestCard } from "@/components/RequestCard";
-import { addApplication, listApplications, listRequests } from "@/lib/repo";
+import { addApplication, listApplications, listRequests, isFavoriteOf } from "@/lib/repo";
 import { getCurrentProfile } from "@/lib/session";
 import { assistantNav } from "@/lib/nav";
 import type { Profile, Request } from "@/lib/types";
@@ -22,9 +22,13 @@ export default function Feed() {
       const filtered: Request[] = [];
       for (const r of rs) {
         const apps = await listApplications(r.id);
-        // hide if full OR if this user already applied
         const alreadyApplied = apps.find(a => a.applicantId === p?.id);
-        if (apps.length < 5 && !alreadyApplied) filtered.push(r);
+        if (apps.length >= 5 || alreadyApplied) continue;
+        if ((r as any).onlyFavorites && (r as any).agencyId) {
+          const ok = await isFavoriteOf((r as any).agencyId, p?.id ?? "");
+          if (!ok) continue;
+        }
+        filtered.push(r);
       }
       setRequests(filtered);
     })();

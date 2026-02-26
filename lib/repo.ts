@@ -19,7 +19,7 @@ export async function listRequests(filter?: { kind?: "assistant"|"guide"; status
 
 export async function createRequest(r: Omit<Request,"id"|"status"|"createdAt"|"updatedAt">, agencyProfileId?: string) {
   const st = loadMockState();
-  const req = { ...r, id: uid("req"), status:"open", createdAt: now(), updatedAt: now() } as Request;
+  const req = { ...r, id: uid("req"), status:"open", createdAt: now(), updatedAt: now(), agencyId: agencyProfileId } as Request;
   st.requests.unshift(req);
   if (agencyProfileId) {
     const costCredits = r.kind === "assistant" ? 5 : 10;
@@ -215,6 +215,61 @@ export async function listSubscriptionPayments(profileId: string): Promise<Subsc
   return st.subscriptionPayments
     .filter(x => x.profileId === profileId)
     .sort((a,b) => a.createdAt > b.createdAt ? -1 : 1);
+}
+
+// ─── Favorites ────────────────────────────────────────────────────────────────
+
+export async function addFavorite(agencyId: string, applicantId: string): Promise<void> {
+  const st = loadMockState();
+  if (!st.favorites[agencyId]) st.favorites[agencyId] = [];
+  if (!st.favorites[agencyId].includes(applicantId)) st.favorites[agencyId].push(applicantId);
+  saveMockState(st);
+}
+
+export async function removeFavorite(agencyId: string, applicantId: string): Promise<void> {
+  const st = loadMockState();
+  if (st.favorites[agencyId]) st.favorites[agencyId] = st.favorites[agencyId].filter(id => id !== applicantId);
+  saveMockState(st);
+}
+
+export async function isFavorite(agencyId: string, applicantId: string): Promise<boolean> {
+  const st = loadMockState();
+  return (st.favorites[agencyId] ?? []).includes(applicantId);
+}
+
+export async function isFavoriteOf(agencyId: string, applicantId: string): Promise<boolean> {
+  return isFavorite(agencyId, applicantId);
+}
+
+export async function listFavorites(agencyId: string): Promise<ApplicantProfile[]> {
+  const st = loadMockState();
+  const ids = st.favorites[agencyId] ?? [];
+  return ids.map(id => st.applicantProfiles[id]).filter(Boolean);
+}
+
+export async function searchApplicants(query: string, role?: "assistant" | "guide"): Promise<ApplicantProfile[]> {
+  if (!query.trim()) return [];
+  const st = loadMockState();
+  const q = query.toLowerCase();
+  return Object.values(st.applicantProfiles).filter(p => {
+    if (role && p.role !== role) return false;
+    return p.name.toLowerCase().includes(q);
+  });
+}
+
+export async function publishForAll(requestId: string): Promise<void> {
+  const st = loadMockState();
+  const r = st.requests.find(x => x.id === requestId);
+  if (r) { (r as any).onlyFavorites = false; r.updatedAt = now(); saveMockState(st); }
+}
+
+export async function getCompletedCountWithAgency(applicantId: string, agencyId: string): Promise<number> {
+  const st = loadMockState();
+  return st.requests.filter(r =>
+    r.status === "archived" &&
+    (r as any).confirmedApplicantId === applicantId &&
+    (r as any).agencyId === agencyId
+  ).length;
 }
 
 // ─── Admin functions ──────────────────────────────────────────────────────────

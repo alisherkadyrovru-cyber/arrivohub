@@ -3,35 +3,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { ApplicantsList, RequestCard } from "@/components/RequestCard";
+import { ApplicantModal } from "@/components/ApplicantModal";
 import { agencyNav } from "@/lib/nav";
-import { confirmRequest, listApplications, listRequests, updateRequest, getApplicantProfile } from "@/lib/repo";
+import { confirmRequest, listApplications, listRequests, updateRequest, getApplicantProfile, publishForAll } from "@/lib/repo";
+import { getCurrentProfile } from "@/lib/session";
 import type { Application, ApplicantProfile, Request } from "@/lib/types";
-
-function ApplicantModal({ profile, onClose }: { profile: ApplicantProfile; onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div className="glass max-w-sm w-full mx-4 p-5 space-y-3" onClick={e => e.stopPropagation()}>
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="text-base font-semibold">{profile.name}</div>
-            <div className="text-xs text-white/70 mt-0.5">{profile.gender} · {profile.age} years old</div>
-          </div>
-          <button className="glass-btn px-2 py-1 text-xs" onClick={onClose}>✕</button>
-        </div>
-        <div className="space-y-1.5 text-sm">
-          <div><span className="muted">Languages: </span>{profile.languages.map(l => `${l.lang} (${l.level})`).join(", ")}</div>
-          <div><span className="muted">Rating: </span>{"★".repeat(Math.round(profile.rating))}{"☆".repeat(5 - Math.round(profile.rating))} {profile.rating}/5</div>
-          <div><span className="muted">Completed: </span>{profile.completedCount} requests</div>
-          {profile.tursabCard && <div><span className="muted">Tursab ID: </span>{profile.tursabCard}</div>}
-          {profile.kokartId && <div><span className="muted">Kokart ID: </span>{profile.kokartId}</div>}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function PendingRequests() {
   const router = useRouter();
+  const [agencyId, setAgencyId] = useState("");
   const [requests, setRequests] = useState<Request[]>([]);
   const [appsMap, setAppsMap] = useState<Record<string, Application[]>>({});
   const [selected, setSelected] = useState<Record<string, string | null>>({});
@@ -47,7 +27,11 @@ export default function PendingRequests() {
     for (const r of rs) map[r.id] = await listApplications(r.id);
     setAppsMap(map);
   }
-  useEffect(() => { refresh(); }, []);
+
+  useEffect(() => {
+    getCurrentProfile().then(p => { if (p) setAgencyId(p.id); });
+    refresh();
+  }, []);
 
   async function handleConfirm(requestId: string) {
     const appId = selected[requestId];
@@ -75,7 +59,9 @@ export default function PendingRequests() {
 
   return (
     <AppShell role="agency" navItems={agencyNav} centerTitle={(p) => p.fullName} rightSlot={(p) => <span className="chip">Credits: {p.credits ?? 0}</span>}>
-      {modalProfile && <ApplicantModal profile={modalProfile} onClose={() => setModalProfile(null)} />}
+      {modalProfile && agencyId && (
+        <ApplicantModal profile={modalProfile} onClose={() => setModalProfile(null)} showContact={false} agencyId={agencyId} />
+      )}
       <div className="space-y-4">
         <div className="text-lg font-semibold">Active requests — Pending</div>
         <div className="space-y-3">
@@ -84,6 +70,11 @@ export default function PendingRequests() {
           ) : (
             requests.map((r) => (
               <RequestCard key={r.id} request={r}>
+                {(r as any).onlyFavorites && (
+                  <div className="flex justify-end">
+                    <span className="chip text-xs border-amber-300/40 bg-amber-400/15 text-amber-100">Only for my favorites</span>
+                  </div>
+                )}
                 <ApplicantsList
                   applications={appsMap[r.id] ?? []}
                   selectedId={selected[r.id] ?? null}
@@ -123,6 +114,12 @@ export default function PendingRequests() {
                   <button className="glass-btn" type="button" onClick={() => router.push(`/agency/requests/${r.id}/change-details?from=pending`)}>
                     Change details
                   </button>
+
+                  {(r as any).onlyFavorites && (
+                    <button className="glass-btn" type="button" onClick={async () => { await publishForAll(r.id); await refresh(); }}>
+                      Publish for all
+                    </button>
+                  )}
                 </div>
               </RequestCard>
             ))

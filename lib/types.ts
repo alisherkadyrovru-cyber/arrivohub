@@ -1,6 +1,6 @@
 export type Role = "agency" | "assistant" | "guide" | "admin";
 export type RequestKind = "assistant" | "guide";
-export type AssistType = "Greeter" | "Assistant";
+export type AssistType = "Greeter" | "Assistant" | "AssistantOther";
 export type ADType = "Arrival" | "Departure" | "Other";
 export type GuideType = "FD" | "FD+Night" | "A Few Days";
 export type RequestStatus = "open" | "confirmed" | "archived";
@@ -24,6 +24,8 @@ export type RequestBase = {
   confirmedPriceTry?: number;
   pendingDetailsUpdate?: boolean;
   finishedAt?: string;
+  onlyFavorites?: boolean;
+  agencyId?: string;
 };
 
 export type AssistantRequest = RequestBase & {
@@ -63,6 +65,7 @@ export type ApplicantProfile = {
   kokartId?: string;
   phone?: string;
   email?: string;
+  role?: "assistant" | "guide";
 };
 
 export type Profile = {

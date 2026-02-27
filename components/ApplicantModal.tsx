@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { addFavorite, removeFavorite, isFavorite } from "@/lib/repo";
-import type { ApplicantProfile } from "@/lib/types";
+import { addFavorite, removeFavorite, isFavorite, getApplicantComments } from "@/lib/repo";
+import type { ApplicantProfile, Rating } from "@/lib/types";
 
 export function ApplicantModal({
   profile, onClose, showContact, agencyId,
@@ -13,9 +13,12 @@ export function ApplicantModal({
 }) {
   const [fav, setFav] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const [comments, setComments] = useState<Rating[]>([]);
+  const [showComments, setShowComments] = useState(false);
 
   useEffect(() => {
     if (agencyId) isFavorite(agencyId, profile.id).then(setFav);
+    getApplicantComments(profile.id).then(setComments);
   }, [agencyId, profile.id]);
 
   async function toggleFav() {
@@ -54,6 +57,31 @@ export function ApplicantModal({
           {showContact && profile.phone && <div><span className="muted">Phone: </span>{profile.phone}</div>}
           {showContact && profile.email && <div><span className="muted">Email: </span>{profile.email}</div>}
         </div>
+
+        {comments.length > 0 && (
+          <div>
+            <button
+              className="glass-btn text-xs"
+              type="button"
+              onClick={() => setShowComments(v => !v)}
+            >
+              {showComments ? "Hide comments" : `View comments (${comments.length})`}
+            </button>
+            {showComments && (
+              <div className="mt-2 space-y-2 max-h-48 overflow-y-auto">
+                {comments.map(c => (
+                  <div key={c.id} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span>{"★".repeat(c.stars)}{"☆".repeat(5 - c.stars)}</span>
+                      {c.agencyName && <span className="text-white/50">{c.agencyName}</span>}
+                    </div>
+                    <div className="text-white/80">{c.comment}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

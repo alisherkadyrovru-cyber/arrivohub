@@ -85,6 +85,18 @@ export type Profile = {
   languages?: { lang: string; level: string }[];
   vatNumber?: string;
   tursabLicense?: string;
+  rating?: number;
+};
+
+export type Rating = {
+  id: string;
+  applicantId: string;
+  requestId: string;
+  agencyId: string;
+  stars: number;
+  comment?: string;
+  agencyName?: string;
+  createdAt: string;
 };
 
 export type ReceiptUpload = {

@@ -6,7 +6,7 @@ export function Header({ titleCenter, rightSlot, showContacts=true, homeHref="/"
         <Link href={homeHref} className="text-lg font-semibold tracking-tight">ArrivoHub</Link>
         <div className="text-sm font-semibold text-white/90">{titleCenter ?? ""}</div>
         <div className="flex items-center gap-3">
-          {showContacts ? <Link className="glass-btn" href="/contact">Контакты</Link> : null}
+          {showContacts ? <Link className="glass-btn" href="/contact">Contacts</Link> : null}
           {rightSlot}
         </div>
       </div>

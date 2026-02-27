@@ -37,10 +37,13 @@ export function AppShell({
     if (!profile) return null;
     return (
       <div className="flex items-center gap-2">
+        {(role === "assistant" || role === "guide") && (profile as any).rating != null && (
+          <span className="chip">★ {((profile as any).rating as number).toFixed(1)}</span>
+        )}
         {rightSlot ? rightSlot(profile) : null}
       </div>
     );
-  },[profile,rightSlot]);
+  },[profile,rightSlot,role]);
 
   const fullNavItems = useMemo(() => {
     if (!profile) return navItems;

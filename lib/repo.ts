@@ -1,7 +1,7 @@
 "use client";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { loadMockState, saveMockState } from "@/lib/mock/store";
-import type { Application, ApplicantProfile, Profile, ReceiptUpload, Request, SubscriptionPayment } from "@/lib/types";
+import type { Application, ApplicantProfile, Profile, Rating, ReceiptUpload, Request, SubscriptionPayment } from "@/lib/types";
 
 function uid(prefix:string){ return `${prefix}_${Math.random().toString(16).slice(2)}_${Date.now()}`; }
 function now(){ return new Date().toISOString(); }
@@ -270,6 +270,53 @@ export async function getCompletedCountWithAgency(applicantId: string, agencyId:
     (r as any).confirmedApplicantId === applicantId &&
     (r as any).agencyId === agencyId
   ).length;
+}
+
+// ─── Ratings ──────────────────────────────────────────────────────────────────
+
+export async function rateApplicant(
+  applicantId: string, requestId: string, agencyId: string,
+  stars: number, comment?: string, agencyName?: string
+): Promise<void> {
+  const st = loadMockState();
+  const existing = st.ratings.find(r => r.requestId === requestId && r.agencyId === agencyId);
+  if (existing) {
+    existing.stars = stars;
+    if (comment !== undefined) existing.comment = comment;
+  } else {
+    const rating: Rating = { id: uid("rat"), applicantId, requestId, agencyId, stars, comment, agencyName, createdAt: now() };
+    st.ratings.push(rating);
+  }
+  // recompute average
+  const allForApplicant = st.ratings.filter(r => r.applicantId === applicantId);
+  const avg = allForApplicant.reduce((s, r) => s + r.stars, 0) / allForApplicant.length;
+  const rounded = Math.round(avg * 10) / 10;
+  if (st.applicantProfiles[applicantId]) st.applicantProfiles[applicantId].rating = rounded;
+  if (st.profiles[applicantId]) (st.profiles[applicantId] as any).rating = rounded;
+  saveMockState(st);
+}
+
+export async function getRatingForRequest(requestId: string, agencyId: string): Promise<Rating | null> {
+  const st = loadMockState();
+  return st.ratings.find(r => r.requestId === requestId && r.agencyId === agencyId) ?? null;
+}
+
+export async function getApplicantComments(applicantId: string): Promise<Rating[]> {
+  const st = loadMockState();
+  return st.ratings.filter(r => r.applicantId === applicantId && r.comment);
+}
+
+// ─── Sign / Board ─────────────────────────────────────────────────────────────
+
+export async function setSignBoard(requestId: string, fileName: string): Promise<void> {
+  const st = loadMockState();
+  st.signBoards[requestId] = { fileName };
+  saveMockState(st);
+}
+
+export async function getSignBoard(requestId: string): Promise<{ fileName: string } | null> {
+  const st = loadMockState();
+  return st.signBoards[requestId] ?? null;
 }
 
 // ─── Admin functions ──────────────────────────────────────────────────────────

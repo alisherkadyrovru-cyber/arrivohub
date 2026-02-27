@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { RequestCard } from "@/components/RequestCard";
 import { guideNav } from "@/lib/nav";
-import { archiveRequest, getTransportDetails, listRequests, resolveDetailsUpdate } from "@/lib/repo";
+import { archiveRequest, getTransportDetails, listRequests, resolveDetailsUpdate, getSignBoard } from "@/lib/repo";
 import { getCurrentProfile } from "@/lib/session";
 import type { Request } from "@/lib/types";
 
@@ -12,6 +12,7 @@ export default function Confirmed() {
   const router = useRouter();
   const [items, setItems] = useState<Request[]>([]);
   const [transport, setTransport] = useState<Record<string, any>>({});
+  const [signBoards, setSignBoards] = useState<Record<string, string | null>>({});
 
   async function refresh() {
     const p = await getCurrentProfile();
@@ -19,8 +20,14 @@ export default function Confirmed() {
     const mine = rs.filter(r => r.confirmedApplicantId === p?.id);
     setItems(mine);
     const t: Record<string, any> = {};
-    for (const r of mine) t[r.id] = await getTransportDetails(r.id);
+    const sb: Record<string, string | null> = {};
+    for (const r of mine) {
+      t[r.id] = await getTransportDetails(r.id);
+      const board = await getSignBoard(r.id);
+      sb[r.id] = board?.fileName ?? null;
+    }
     setTransport(t);
+    setSignBoards(sb);
   }
   useEffect(() => { refresh(); }, []);
 
@@ -46,6 +53,17 @@ export default function Confirmed() {
                     <span className="text-amber-100">Waiting for agent to add transport details</span>
                   )}
                 </div>
+                {signBoards[r.id] && (
+                  <div className="text-sm flex items-center gap-2">
+                    <span className="muted">Sign/Board: </span>
+                    <span className="text-white/90">{signBoards[r.id]}</span>
+                    <a
+                      href="#"
+                      className="glass-btn text-xs"
+                      onClick={e => { e.preventDefault(); alert(`Mock download: ${signBoards[r.id]}`); }}
+                    >Download</a>
+                  </div>
+                )}
 
                 {r.pendingDetailsUpdate && (
                   <div className="border border-amber-200/30 bg-amber-500/10 rounded-xl p-3 space-y-2">

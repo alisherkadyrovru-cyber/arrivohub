@@ -1,4 +1,4 @@
-import type { Application, ApplicantProfile, Profile, ReceiptUpload, Request, SubscriptionPayment } from "@/lib/types";
+import type { Application, ApplicantProfile, Profile, Rating, ReceiptUpload, Request, SubscriptionPayment } from "@/lib/types";
 
 type MockState = {
   profiles: Record<string, Profile>;
@@ -11,6 +11,8 @@ type MockState = {
   receiptUploads: ReceiptUpload[];
   subscriptionPayments: SubscriptionPayment[];
   favorites: Record<string, string[]>;
+  ratings: Rating[];
+  signBoards: Record<string, { fileName: string }>;
 };
 
 function nowIso(){ return new Date().toISOString(); }
@@ -112,6 +114,8 @@ const seed: MockState = (() => {
     receiptUploads: [],
     subscriptionPayments,
     favorites: {},
+    ratings: [],
+    signBoards: {},
   };
 })();
 
@@ -128,6 +132,8 @@ export function loadMockState(): MockState {
     if (!parsed.receiptUploads) parsed.receiptUploads = [];
     if (!parsed.subscriptionPayments) parsed.subscriptionPayments = seed.subscriptionPayments;
     if (!parsed.favorites) parsed.favorites = {};
+    if (!parsed.ratings) parsed.ratings = [];
+    if (!parsed.signBoards) parsed.signBoards = {};
     return parsed;
   } catch { return seed; }
 }

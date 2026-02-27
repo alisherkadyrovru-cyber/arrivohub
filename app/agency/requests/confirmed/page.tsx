@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { RequestCard } from "@/components/RequestCard";
 import { ApplicantModal } from "@/components/ApplicantModal";
 import { agencyNav } from "@/lib/nav";
-import { getTransportDetails, listRequests, setTransportDetails, getApplicantProfile } from "@/lib/repo";
+import { getTransportDetails, listRequests, setTransportDetails, getApplicantProfile, setSignBoard, getSignBoard } from "@/lib/repo";
 import { getCurrentProfile } from "@/lib/session";
 import type { ApplicantProfile, Request } from "@/lib/types";
 
@@ -53,13 +53,21 @@ export default function ConfirmedRequests() {
   const [transport, setTransport] = useState<Record<string, Transport | null>>({});
   const [transportFormOpen, setTransportFormOpen] = useState<Record<string, boolean>>({});
   const [modalProfile, setModalProfile] = useState<ApplicantProfile | null>(null);
+  const [signBoards, setSignBoards] = useState<Record<string, string | null>>({});
+  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   async function refresh() {
     const rs = await listRequests({ status: "confirmed" });
     setRequests(rs);
     const t: Record<string, Transport | null> = {};
-    for (const r of rs) t[r.id] = await getTransportDetails(r.id);
+    const sb: Record<string, string | null> = {};
+    for (const r of rs) {
+      t[r.id] = await getTransportDetails(r.id);
+      const board = await getSignBoard(r.id);
+      sb[r.id] = board?.fileName ?? null;
+    }
     setTransport(t);
+    setSignBoards(sb);
   }
 
   useEffect(() => {
@@ -71,6 +79,11 @@ export default function ConfirmedRequests() {
     if (!applicantId) return;
     const profile = await getApplicantProfile(applicantId);
     if (profile) setModalProfile(profile);
+  }
+
+  async function handleSignBoardUpload(requestId: string, file: File) {
+    await setSignBoard(requestId, file.name);
+    setSignBoards(prev => ({ ...prev, [requestId]: file.name }));
   }
 
   return (
@@ -108,6 +121,13 @@ export default function ConfirmedRequests() {
                   )}
                 </div>
 
+                {signBoards[r.id] && (
+                  <div className="text-sm">
+                    <span className="muted">Sign/Board: </span>
+                    <span className="text-white/90">{signBoards[r.id]}</span>
+                  </div>
+                )}
+
                 {transportFormOpen[r.id] ? (
                   <TransportForm
                     requestId={r.id}
@@ -120,6 +140,16 @@ export default function ConfirmedRequests() {
                   <button className="glass-btn" type="button" onClick={() => setTransportFormOpen(p => ({ ...p, [r.id]: !p[r.id] }))}>
                     {transport[r.id] ? "Edit Driver & Transport" : "Add Driver & Transport details"}
                   </button>
+                  <button className="glass-btn" type="button" onClick={() => fileRefs.current[r.id]?.click()}>
+                    {signBoards[r.id] ? "Change Sign/Board" : "Add Sign/Board"}
+                  </button>
+                  <input
+                    ref={el => { fileRefs.current[r.id] = el; }}
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    className="hidden"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) handleSignBoardUpload(r.id, f); }}
+                  />
                   <button className="glass-btn" type="button" onClick={() => router.push(`/agency/requests/${r.id}/change-details?from=confirmed`)}>
                     Change details
                   </button>

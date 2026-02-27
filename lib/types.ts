@@ -96,6 +96,7 @@ export type Rating = {
   stars: number;
   comment?: string;
   agencyName?: string;
+  anonymousName?: string;
   createdAt: string;
 };
 

@@ -19,21 +19,37 @@ function StarRating({ requestId, applicantId, agencyId, agencyName, onRated }: {
 }) {
   const [stars, setStars] = useState(0);
   const [hover, setHover] = useState(0);
-  const [comment, setComment] = useState("");
-  const [showComment, setShowComment] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(false);   // true = stars locked
   const [saving, setSaving] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [showCommentInput, setShowCommentInput] = useState(false);
+  const [commentSubmitted, setCommentSubmitted] = useState(false);
+  const [submittedComment, setSubmittedComment] = useState("");
 
   useEffect(() => {
     getRatingForRequest(requestId, agencyId).then(r => {
-      if (r) { setStars(r.stars); setComment(r.comment ?? ""); setSaved(true); }
+      if (r) {
+        setStars(r.stars);
+        setSaved(true);
+        if (r.comment) { setCommentSubmitted(true); setSubmittedComment(r.comment); }
+      }
     });
   }, [requestId, agencyId]);
 
-  async function save(s: number, c?: string) {
+  async function saveRating(s: number) {
     setSaving(true);
-    await rateApplicant(applicantId, requestId, agencyId, s, c, agencyName);
-    setSaved(true); setSaving(false); onRated();
+    await rateApplicant(applicantId, requestId, agencyId, s, undefined, agencyName);
+    setStars(s); setSaved(true); setSaving(false); onRated();
+  }
+
+  async function saveComment() {
+    if (!commentText.trim()) return;
+    setSaving(true);
+    await rateApplicant(applicantId, requestId, agencyId, stars, commentText.trim(), agencyName);
+    setSubmittedComment(commentText.trim());
+    setCommentSubmitted(true);
+    setShowCommentInput(false);
+    setSaving(false);
   }
 
   return (
@@ -45,40 +61,49 @@ function StarRating({ requestId, applicantId, agencyId, agencyName, onRated }: {
             key={n}
             type="button"
             className="text-lg leading-none transition-colors"
-            style={{ color: n <= (hover || stars) ? "#facc15" : "rgba(255,255,255,0.3)" }}
-            onMouseEnter={() => setHover(n)}
-            onMouseLeave={() => setHover(0)}
-            onClick={() => { setStars(n); setSaved(false); save(n, comment || undefined); }}
-            disabled={saving}
+            style={{ color: n <= (saved ? stars : (hover || stars)) ? "#facc15" : "rgba(255,255,255,0.3)" }}
+            onMouseEnter={() => { if (!saved) setHover(n); }}
+            onMouseLeave={() => { if (!saved) setHover(0); }}
+            onClick={() => { if (!saved && !saving) saveRating(n); }}
+            disabled={saved || saving}
           >★</button>
         ))}
-        {saved && stars > 0 && <span className="text-xs text-emerald-300 ml-1">Saved</span>}
+        {saved && <span className="text-xs text-emerald-300 ml-1">Rated</span>}
       </div>
-      {stars > 0 && (
+
+      {saved && !commentSubmitted && (
         <div className="space-y-1">
-          <button
-            type="button"
-            className="glass-btn text-xs"
-            onClick={() => setShowComment(v => !v)}
-          >
-            {showComment ? "Hide comment" : (comment ? "Edit comment" : "Write a comment")}
-          </button>
-          {showComment && (
+          {!showCommentInput ? (
+            <button
+              type="button"
+              className="glass-btn text-xs"
+              onClick={() => setShowCommentInput(true)}
+            >
+              Write a comment
+            </button>
+          ) : (
             <div className="flex gap-2 items-start">
               <textarea
                 className="input flex-1 min-h-[72px] text-sm"
-                placeholder="Optional comment about this person..."
-                value={comment}
-                onChange={e => setComment(e.target.value)}
+                placeholder="Optional comment about this person... (max 1000 chars)"
+                value={commentText}
+                maxLength={1000}
+                onChange={e => setCommentText(e.target.value)}
               />
               <button
                 className="glass-btn text-xs self-end"
                 type="button"
-                disabled={saving}
-                onClick={async () => { await save(stars, comment || undefined); setShowComment(false); }}
+                disabled={saving || !commentText.trim()}
+                onClick={saveComment}
               >Save</button>
             </div>
           )}
+        </div>
+      )}
+
+      {saved && commentSubmitted && (
+        <div className="text-sm text-white/75 italic border-l-2 border-white/20 pl-3">
+          {submittedComment}
         </div>
       )}
     </div>

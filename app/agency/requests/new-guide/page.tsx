@@ -13,10 +13,10 @@ export default function NewGuideRequest() {
   const [guideType, setGuideType] = useState<GuideType>("FD");
   const [date, setDate] = useState("");
   const [hotel, setHotel] = useState("");
-  const [pax, setPax] = useState(1);
+  const [pax, setPax] = useState<number | "">("");
   const [lang, setLang] = useState("EN");
   const [notes, setNotes] = useState("");
-  const [priceTry, setPriceTry] = useState(0);
+  const [priceTry, setPriceTry] = useState<number | "">("");
   const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -39,10 +39,10 @@ export default function NewGuideRequest() {
               guideType,
               date,
               hotel,
-              pax,
+              pax: Number(pax) || 1,
               lang,
               notes,
-              priceTry,
+              priceTry: Number(priceTry) || 0,
               onlyFavorites,
             } as any, agencyId || profile?.id);
             router.push("/agency/requests/pending");
@@ -64,12 +64,12 @@ export default function NewGuideRequest() {
 
           <label className="block md:col-span-2">
             <div className="label">Hotel</div>
-            <input className="input mt-1" value={hotel} onChange={(e)=>setHotel(e.target.value)} required />
+            <input className="input mt-1" value={hotel} maxLength={100} onChange={(e)=>setHotel(e.target.value)} required />
           </label>
 
           <label className="block">
             <div className="label">Pax</div>
-            <input className="input mt-1" type="number" min={1} value={pax} onChange={(e)=>setPax(parseInt(e.target.value||"1",10))} required />
+            <input className="input mt-1" type="number" min={1} value={pax} placeholder="e.g. 3" onChange={(e)=>setPax(e.target.value === "" ? "" : parseInt(e.target.value, 10))} required />
           </label>
 
           <label className="block">
@@ -81,12 +81,12 @@ export default function NewGuideRequest() {
 
           <label className="block md:col-span-2">
             <div className="label">Notes</div>
-            <textarea className="input mt-1 min-h-[110px]" value={notes} onChange={(e)=>setNotes(e.target.value)} placeholder="Any extra details" />
+            <textarea className="input mt-1 min-h-[110px]" value={notes} maxLength={1000} onChange={(e)=>setNotes(e.target.value)} placeholder="Any extra details" />
           </label>
 
           <label className="block">
             <div className="label">Price TRY</div>
-            <input className="input mt-1" type="number" min={0} value={priceTry} onChange={(e)=>setPriceTry(parseInt(e.target.value||"0",10))} required />
+            <input className="input mt-1" type="number" min={0} value={priceTry} placeholder="e.g. 5000" onChange={(e)=>setPriceTry(e.target.value === "" ? "" : parseInt(e.target.value, 10))} required />
           </label>
 
           <div className="flex items-center gap-3 flex-wrap">

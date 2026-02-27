@@ -73,7 +73,7 @@ export function ApplicantModal({
                   <div key={c.id} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs space-y-0.5">
                     <div className="flex items-center gap-2">
                       <span>{"★".repeat(c.stars)}{"☆".repeat(5 - c.stars)}</span>
-                      {c.agencyName && <span className="text-white/50">{c.agencyName}</span>}
+                      <span className="text-white/50">{c.anonymousName ?? "Anonymous"}</span>
                     </div>
                     <div className="text-white/80">{c.comment}</div>
                   </div>

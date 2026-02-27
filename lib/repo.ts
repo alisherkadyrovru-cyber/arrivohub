@@ -274,6 +274,15 @@ export async function getCompletedCountWithAgency(applicantId: string, agencyId:
 
 // ─── Ratings ──────────────────────────────────────────────────────────────────
 
+const ANON_ANIMALS = ["Penguin","Tiger","Koala","Panda","Fox","Dolphin",
+  "Elephant","Owl","Hedgehog","Flamingo","Octopus","Meerkat",
+  "Capybara","Axolotl","Narwhal","Platypus"];
+function getAnonymousName(agencyId: string): string {
+  let h = 0;
+  for (let i = 0; i < agencyId.length; i++) h = (h * 31 + agencyId.charCodeAt(i)) >>> 0;
+  return `Anonymous ${ANON_ANIMALS[h % ANON_ANIMALS.length]} ${(h % 90) + 10}`;
+}
+
 export async function rateApplicant(
   applicantId: string, requestId: string, agencyId: string,
   stars: number, comment?: string, agencyName?: string
@@ -281,13 +290,19 @@ export async function rateApplicant(
   const st = loadMockState();
   const existing = st.ratings.find(r => r.requestId === requestId && r.agencyId === agencyId);
   if (existing) {
-    existing.stars = stars;
-    if (comment !== undefined) existing.comment = comment;
-  } else {
-    const rating: Rating = { id: uid("rat"), applicantId, requestId, agencyId, stars, comment, agencyName, createdAt: now() };
-    st.ratings.push(rating);
+    // stars are locked — only allow first-time comment if none set yet
+    if (comment !== undefined && !existing.comment) existing.comment = comment;
+    saveMockState(st);
+    return;
   }
-  // recompute average
+  const rating: Rating = {
+    id: uid("rat"), applicantId, requestId, agencyId,
+    stars, comment, agencyName,
+    anonymousName: getAnonymousName(agencyId),
+    createdAt: now(),
+  };
+  st.ratings.push(rating);
+  // recompute average on new rating only
   const allForApplicant = st.ratings.filter(r => r.applicantId === applicantId);
   const avg = allForApplicant.reduce((s, r) => s + r.stars, 0) / allForApplicant.length;
   const rounded = Math.round(avg * 10) / 10;
